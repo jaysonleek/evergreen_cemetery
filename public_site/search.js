@@ -1,11 +1,5 @@
 /* === search.js (no Fuse.js) === */
 
-/*
-  Loads data.json from the ROOT of the site
-  and performs simple case-insensitive substring search
-  over name fields using plain JavaScript.
-*/
-
 let DATA = [];
 
 // DOM elements
@@ -17,9 +11,7 @@ const detailContainer = document.getElementById("detail-container");
 async function loadData() {
   try {
     const response = await fetch("data.json");
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     DATA = await response.json();
     console.log(`Loaded ${DATA.length} burial records.`);
   } catch (err) {
@@ -32,7 +24,7 @@ async function loadData() {
   }
 }
 
-// Simple case-insensitive substring match against name fields
+// Simple case-insensitive substring match
 function searchRecords(query) {
   const q = query.toLowerCase();
 
@@ -46,35 +38,30 @@ function searchRecords(query) {
       rec.Display_Name
     ];
 
-    return fields.some((v) => {
-      if (!v) return false;
-      return String(v).toLowerCase().includes(q);
-    });
-  }).slice(0, 50); // limit to 50 results
+    return fields.some((v) => v && v.toLowerCase().includes(q));
+  }).slice(0, 50);
 }
 
 // Render search results
 function renderResults(results) {
-  if (!results || results.length === 0) {
+  if (!results.length) {
     resultsContainer.innerHTML = `
       <p class="results-placeholder">No matches found.</p>
     `;
     return;
   }
 
-  let html = "";
-  results.forEach((item) => {
-    html += `
+  resultsContainer.innerHTML = results
+    .map(
+      (item) => `
       <div class="result-item" data-id="${item.Global_Burial_ID}">
         <div class="result-name">${item.Display_Name}</div>
         <div class="result-location">${item.Burial_Location_Short || ""}</div>
       </div>
-    `;
-  });
+    `
+    )
+    .join("");
 
-  resultsContainer.innerHTML = html;
-
-  // Add click handlers
   document.querySelectorAll(".result-item").forEach((el) => {
     el.addEventListener("click", () => {
       const id = el.getAttribute("data-id");
@@ -99,55 +86,16 @@ function renderDetail(rec) {
       : "<span style='color:#777'>(none)</span>";
 
   detailContainer.innerHTML = `
-    <div class="detail-field">
-      <span class="detail-label">Name:</span>
-      <span class="detail-value">${safe(rec.Display_Name)}</span>
-    </div>
-
-    <div class="detail-field">
-      <span class="detail-label">Maiden Name:</span>
-      <span class="detail-value">${safe(rec.Maiden_Name)}</span>
-    </div>
-
-    <div class="detail-field">
-      <span class="detail-label">Alternate Name:</span>
-      <span class="detail-value">${safe(rec.Alternate_Name)}</span>
-    </div>
-
-    <div class="detail-field">
-      <span class="detail-label">Birth:</span>
-      <span class="detail-value">${safe(rec.Birth_Date_ISO)}</span>
-    </div>
-
-    <div class="detail-field">
-      <span class="detail-label">Death:</span>
-      <span class="detail-value">${safe(rec.Death_Date_ISO)}</span>
-    </div>
-
-    <div class="detail-field">
-      <span class="detail-label">Burial Location:</span>
-      <span class="detail-value">${safe(rec.Burial_Location_Short)}</span>
-    </div>
-
-    <div class="detail-field">
-      <span class="detail-label">Location Notes:</span>
-      <span class="detail-value">${safe(rec.Burial_Location_Notes)}</span>
-    </div>
-
-    <div class="detail-field">
-      <span class="detail-label">Relationship Note:</span>
-      <span class="detail-value">${safe(rec.Relationship_Note)}</span>
-    </div>
-
-    <div class="detail-field">
-      <span class="detail-label">Narrative Note:</span>
-      <span class="detail-value">${safe(rec.Narrative_Note)}</span>
-    </div>
-
-    <div class="detail-field">
-      <span class="detail-label">Record Source:</span>
-      <span class="detail-value">${safe(rec.Source_File)} (row ${safe(rec.Source_Row)})</span>
-    </div>
+    <div class="detail-field"><span class="detail-label">Name:</span> ${safe(rec.Display_Name)}</div>
+    <div class="detail-field"><span class="detail-label">Maiden Name:</span> ${safe(rec.Maiden_Name)}</div>
+    <div class="detail-field"><span class="detail-label">Alternate Name:</span> ${safe(rec.Alternate_Name)}</div>
+    <div class="detail-field"><span class="detail-label">Birth:</span> ${safe(rec.Birth_Date_ISO)}</div>
+    <div class="detail-field"><span class="detail-label">Death:</span> ${safe(rec.Death_Date_ISO)}</div>
+    <div class="detail-field"><span class="detail-label">Burial Location:</span> ${safe(rec.Burial_Location_Short)}</div>
+    <div class="detail-field"><span class="detail-label">Location Notes:</span> ${safe(rec.Burial_Location_Notes)}</div>
+    <div class="detail-field"><span class="detail-label">Relationship Note:</span> ${safe(rec.Relationship_Note)}</div>
+    <div class="detail-field"><span class="detail-label">Narrative Note:</span> ${safe(rec.Narrative_Note)}</div>
+    <div class="detail-field"><span class="detail-label">Record Source:</span> ${safe(rec.Source_File)} (row ${safe(rec.Source_Row)})</div>
   `;
 }
 
@@ -165,8 +113,7 @@ function handleSearch() {
     return;
   }
 
-  const results = searchRecords(query);
-  renderResults(results);
+  renderResults(searchRecords(query));
 }
 
 // Initialize
