@@ -16,7 +16,7 @@ const detailContainer = document.getElementById("detail-container");
 // Load the dataset from ROOT
 async function loadData() {
   try {
-    const response = await fetch("data.json");  // <-- FIXED PATH
+    const response = await fetch("data.json");  // <-- correct path for GitHub Pages root
     DATA = await response.json();
 
     // Initialize Fuse.js
