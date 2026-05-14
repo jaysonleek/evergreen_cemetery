@@ -1,38 +1,26 @@
-/* === search.js === */
+/* === search.js (no Fuse.js) === */
 
-/* 
-  Loads data.json, initializes Fuse.js, and wires up the search UI.
-  This is the main logic for the Evergreen Cemetery lookup tool.
+/*
+  Loads data.json from the ROOT of the site
+  and performs simple case-insensitive substring search
+  over name fields using plain JavaScript.
 */
 
 let DATA = [];
-let fuse = null;
 
 // DOM elements
 const searchInput = document.getElementById("search-input");
 const resultsContainer = document.getElementById("results-container");
 const detailContainer = document.getElementById("detail-container");
 
-// Load the dataset
+// Load the dataset from ROOT
 async function loadData() {
   try {
     const response = await fetch("data.json");
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
     DATA = await response.json();
-
-    // Initialize Fuse.js
-    fuse = new Fuse(DATA, {
-      keys: [
-        "First_Name",
-        "Middle_Name",
-        "Last_Name",
-        "Maiden_Name",
-        "Alternate_Name",
-        "Display_Name"
-      ],
-      includeScore: true,
-      threshold: 0.3, // good balance of fuzzy vs accuracy
-    });
-
     console.log(`Loaded ${DATA.length} burial records.`);
   } catch (err) {
     console.error("Error loading data.json:", err);
@@ -42,6 +30,27 @@ async function loadData() {
       </p>
     `;
   }
+}
+
+// Simple case-insensitive substring match against name fields
+function searchRecords(query) {
+  const q = query.toLowerCase();
+
+  return DATA.filter((rec) => {
+    const fields = [
+      rec.First_Name,
+      rec.Middle_Name,
+      rec.Last_Name,
+      rec.Maiden_Name,
+      rec.Alternate_Name,
+      rec.Display_Name
+    ];
+
+    return fields.some((v) => {
+      if (!v) return false;
+      return String(v).toLowerCase().includes(q);
+    });
+  }).slice(0, 50); // limit to 50 results
 }
 
 // Render search results
@@ -54,12 +63,11 @@ function renderResults(results) {
   }
 
   let html = "";
-  results.forEach((res) => {
-    const item = res.item;
+  results.forEach((item) => {
     html += `
       <div class="result-item" data-id="${item.Global_Burial_ID}">
         <div class="result-name">${item.Display_Name}</div>
-        <div class="result-location">${item.Burial_Location_Short}</div>
+        <div class="result-location">${item.Burial_Location_Short || ""}</div>
       </div>
     `;
   });
@@ -85,7 +93,10 @@ function renderDetail(rec) {
     return;
   }
 
-  const safe = (v) => (v && v.trim() !== "" ? v : "<span style='color:#777'>(none)</span>");
+  const safe = (v) =>
+    v && String(v).trim() !== ""
+      ? v
+      : "<span style='color:#777'>(none)</span>";
 
   detailContainer.innerHTML = `
     <div class="detail-field">
@@ -154,12 +165,12 @@ function handleSearch() {
     return;
   }
 
-  const results = fuse.search(query).slice(0, 50); // limit to 50 results
+  const results = searchRecords(query);
   renderResults(results);
 }
 
 // Initialize
 window.addEventListener("DOMContentLoaded", async () => {
   await loadData();
-
-  searchInput
+  searchInput.addEventListener("input", handleSearch);
+});
