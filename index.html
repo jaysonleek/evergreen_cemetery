@@ -58,11 +58,17 @@
     </p>
   </footer>
 
-  <!-- Search engine (Fuse.js) -->
-  <script src="fuse.min.js"></script>
+  <!-- NO FUSE.JS ANYMORE -->
+  <script src="search.js?v=3"></script>
 
-  <!-- Main search logic with cache-buster -->
-  <script src="search.js?v=2"></script>
-
+  <noscript>
+    <div class="noscript-warning">
+      <h2>JavaScript Required</h2>
+      <p>
+        This burial lookup tool requires JavaScript to function.
+        Please enable JavaScript in your browser settings and reload the page.
+      </p>
+    </div>
+  </noscript>
 </body>
 </html>
