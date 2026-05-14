@@ -1,8 +1,8 @@
 /* === search.js === */
 
-/* 
-  Loads data.json, initializes Fuse.js, and wires up the search UI.
-  This is the main logic for the Evergreen Cemetery lookup tool.
+/*
+  Loads data.json from the ROOT of the site,
+  initializes Fuse.js, and wires up the search UI.
 */
 
 let DATA = [];
@@ -13,10 +13,10 @@ const searchInput = document.getElementById("search-input");
 const resultsContainer = document.getElementById("results-container");
 const detailContainer = document.getElementById("detail-container");
 
-// Load the dataset
+// Load the dataset from ROOT
 async function loadData() {
   try {
-    const response = await fetch("data.json");
+    const response = await fetch("data.json");  // <-- FIXED PATH
     DATA = await response.json();
 
     // Initialize Fuse.js
@@ -30,7 +30,7 @@ async function loadData() {
         "Display_Name"
       ],
       includeScore: true,
-      threshold: 0.3, // good balance of fuzzy vs accuracy
+      threshold: 0.3
     });
 
     console.log(`Loaded ${DATA.length} burial records.`);
@@ -85,7 +85,10 @@ function renderDetail(rec) {
     return;
   }
 
-  const safe = (v) => (v && v.trim() !== "" ? v : "<span style='color:#777'>(none)</span>");
+  const safe = (v) =>
+    v && String(v).trim() !== ""
+      ? v
+      : "<span style='color:#777'>(none)</span>";
 
   detailContainer.innerHTML = `
     <div class="detail-field">
@@ -154,12 +157,12 @@ function handleSearch() {
     return;
   }
 
-  const results = fuse.search(query).slice(0, 50); // limit to 50 results
+  const results = fuse.search(query).slice(0, 50);
   renderResults(results);
 }
 
 // Initialize
 window.addEventListener("DOMContentLoaded", async () => {
   await loadData();
-
-  searchInput
+  searchInput.addEventListener("input", handleSearch);
+});
